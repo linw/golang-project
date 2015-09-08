@@ -72,7 +72,7 @@ func addEat(w http.ResponseWriter, req *http.Request) {
 	defer leav(enter(fmt.Sprintf("req=%v", req.Form.Encode())))
 
 	res := req.FormValue("s")
-	res_add := ""
+	res_add := res
 	if len(res) <= 0 {
 		res_add = ""
 	} else {
