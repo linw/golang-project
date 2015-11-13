@@ -22,7 +22,7 @@ var data = eat_data{
 	0,
 }
 
-var addr = flag.String("addr", ":8091", "http service address") // Q=17, R=18
+var addr = flag.String("addr", ":80", "http service address") // Q=17, R=18
 
 var templ = template.Must(template.New("qr").Parse(templateStr))
 var templ_eat = template.Must(template.New("eat").Parse(templatestr_eat))
@@ -32,6 +32,7 @@ func main() {
 	http.Handle("/", http.HandlerFunc(QR))
 	http.Handle("/eat", http.HandlerFunc(EAT))
 	http.Handle("/addEat", http.HandlerFunc(addEat))
+	http.Handle("/rmEat", http.HandlerFunc(rmEat))
 	err := http.ListenAndServe(*addr, nil)
 	if err != nil {
 		log.Fatal(`ListenAndServe:`, err)
@@ -89,6 +90,33 @@ func addEat(w http.ResponseWriter, req *http.Request) {
 	http.Redirect(w, req, "/eat", 301)
 }
 
+func rmEat(w http.ResponseWriter, req *http.Request) {
+	defer leav(enter(fmt.Sprintf("req=%v", req.Form.Encode())))
+
+	//	s = append(s[:i], s[i+1:]...)
+
+	res := req.FormValue("s")
+	eatPos := -1
+	if len(res) <= 0 {
+		eatPos = -1
+	} else {
+		for pos, value := range data.TotalEat {
+			if value == res {
+				eatPos = pos
+				break
+			}
+		}
+	}
+
+	if eatPos > 0 {
+		data.TotalEat = append(data.TotalEat[:eatPos], data.TotalEat[eatPos+1:]...)
+	} else if eatPos == 0 {
+		data.TotalEat = data.TotalEat[1:]
+	}
+	http.Redirect(w, req, "/eat", 301)
+}
+
+
 const templateStr = `
 <html>
 <head>
@@ -119,6 +147,13 @@ const templatestr_eat = `
 <form action="/addEat" name=f method="GET">
 <input maxLength=1024 size=70 name=s value="" title="Add Eat">
 <input type=submit value="添加餐馆" name=addEat>
+</form>
+<br>
+<br>
+<br>
+<form action="/rmEat" name=f method="GET">
+<input maxLength=1024 size=70 name=s value="" title="Rm Eat">
+<input type=submit value="删除餐馆" name=addEat>
 </form>
 <br>
 <br>
